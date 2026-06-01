@@ -84,9 +84,10 @@ const INITIAL_DOCUMENTS = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('workspace'); // 'workspace' | 'folders'
-  const [folders, setFolders] = useState(INITIAL_FOLDERS);
-  const [documents, setDocuments] = useState(INITIAL_DOCUMENTS);
+  const [folders, setFolders] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [currentAnalysis, setCurrentAnalysis] = useState(null);
+  const [backendStatus, setBackendStatus] = useState({ online: false, vaultPath: '' });
   
   // Sistema de notificaciones
   const [notification, setNotification] = useState('');
@@ -98,54 +99,150 @@ export default function App() {
     }, 4000);
   };
 
+  // Cargar datos al montar la aplicación
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const folderRes = await fetch('/api/folders');
+        if (folderRes.ok) {
+          const folderData = await folderRes.json();
+          setFolders(folderData);
+        }
+        
+        const docRes = await fetch('/api/documents');
+        if (docRes.ok) {
+          const docData = await docRes.json();
+          setDocuments(docData);
+        }
+
+        const statusRes = await fetch('/api/status');
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          setBackendStatus({ online: true, vaultPath: statusData.vaultPath });
+        }
+      } catch (err) {
+        console.error('Error al conectar con el servidor local DocuAI:', err);
+        triggerNotification('Error de conexión con el backend. Operando en modo memoria local.');
+      }
+    };
+    
+    fetchData();
+  }, []);
+
   // Gestión de carpetas
-  const handleAddFolder = (newFolder) => {
-    const id = newFolder.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    // Evitar ID duplicado
-    const exists = folders.some(f => f.id === id);
-    const finalId = exists ? `${id}_${Date.now()}` : id;
-
-    setFolders([...folders, { id: finalId, ...newFolder }]);
-    triggerNotification(`Nueva carpeta "${newFolder.name}" configurada con éxito.`);
-  };
-
-  const handleUpdateFolder = (id, updatedFolder) => {
-    setFolders(folders.map(f => f.id === id ? { ...f, ...updatedFolder } : f));
-    triggerNotification(`Carpeta "${updatedFolder.name}" actualizada correctamente.`);
-  };
-
-  const handleDeleteFolder = (id) => {
-    const folderName = folders.find(f => f.id === id)?.name;
-    // Filtrar carpeta eliminada
-    setFolders(folders.filter(f => f.id !== id));
-    
-    // Mover los documentos de la carpeta eliminada a la primera carpeta disponible
-    const fallbackFolderId = folders.find(f => f.id !== id)?.id || '';
-    if (fallbackFolderId) {
-      setDocuments(documents.map(doc => 
-        doc.assignedFolderId === id ? { ...doc, assignedFolderId: fallbackFolderId } : doc
-      ));
-    } else {
-      setDocuments(documents.filter(doc => doc.assignedFolderId !== id));
+  const handleAddFolder = async (newFolder) => {
+    try {
+      const res = await fetch('/api/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newFolder)
+      });
+      if (res.ok) {
+        const folder = await res.json();
+        setFolders([...folders, folder]);
+        triggerNotification(`Nueva carpeta "${newFolder.name}" configurada físicamente con éxito.`);
+      } else {
+        triggerNotification('Error al crear la carpeta en disco.');
+      }
+    } catch (err) {
+      console.error(err);
+      triggerNotification('Error de conexión con el servidor.');
     }
-    
-    triggerNotification(`Carpeta "${folderName}" eliminada.`);
+  };
+
+  const handleUpdateFolder = async (id, updatedFolder) => {
+    try {
+      const res = await fetch(`/api/folders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedFolder)
+      });
+      if (res.ok) {
+        const folder = await res.json();
+        setFolders(folders.map(f => f.id === id ? folder : f));
+        triggerNotification(`Carpeta "${updatedFolder.name}" actualizada en el disco.`);
+      } else {
+        triggerNotification('Error al actualizar la carpeta.');
+      }
+    } catch (err) {
+      console.error(err);
+      triggerNotification('Error de conexión con el servidor.');
+    }
+  };
+
+  const handleDeleteFolder = async (id) => {
+    const folderName = folders.find(f => f.id === id)?.name;
+    try {
+      const res = await fetch(`/api/folders/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        // Volver a sincronizar el estado cargando carpetas y documentos frescos
+        const folderRes = await fetch('/api/folders');
+        const foldersData = await folderRes.json();
+        setFolders(foldersData);
+        
+        const docRes = await fetch('/api/documents');
+        const docsData = await docRes.json();
+        setDocuments(docsData);
+
+        triggerNotification(`Carpeta "${folderName}" eliminada físicamente.`);
+      } else {
+        triggerNotification('Error al eliminar la carpeta del servidor.');
+      }
+    } catch (err) {
+      console.error(err);
+      triggerNotification('Error de conexión con el servidor.');
+    }
   };
 
   // Cargar plantillas de carpetas prediseñadas
-  const handleLoadTemplate = (type) => {
+  const handleLoadTemplate = async (type) => {
     let preset = [];
     if (type === 'empresa') {
       preset = INITIAL_FOLDERS;
     } else if (type === 'autonomo') {
       preset = [
-        { id: 'facturas_clientes', name: 'Facturas Emitidas', description: 'Facturas de cobro enviadas a clientes por servicios prestados y horas de consultoría.', icon: '📈', color: '#10b981' },
-        { id: 'gastos_deducibles', name: 'Gastos y Compras', description: 'Facturas recibidas de suscripciones, herramientas de software, hardware y gastos deducibles de autónomo.', icon: '💼', color: '#f59e0b' },
-        { id: 'proyectos_portafolio', name: 'Portafolio e Imagen', description: 'Propuestas de proyectos de clientes, briefs de marca, logotipos, archivos de diseño y capturas de pantalla de trabajos.', icon: '🎨', color: '#a855f7' }
+        { name: 'Facturas Emitidas', description: 'Facturas de cobro enviadas a clientes por servicios prestados y horas de consultoría.', icon: '📈', color: '#10b981' },
+        { name: 'Gastos y Compras', description: 'Facturas recibidas de suscripciones, herramientas de software, hardware y gastos deducibles de autónomo.', icon: '💼', color: '#f59e0b' },
+        { name: 'Portafolio e Imagen', description: 'Portafolio, logotipos, archivos de diseño y capturas de pantalla de trabajos.', icon: '🎨', color: '#a855f7' }
       ];
     }
-    setFolders(preset);
-    triggerNotification(`Estructura restablecida con éxito al modelo propuesto.`);
+    
+    try {
+      triggerNotification('Restableciendo estructura en disco...');
+      // Eliminar carpetas existentes
+      for (const f of folders) {
+        await fetch(`/api/folders/${f.id}`, { method: 'DELETE' });
+      }
+      
+      // Agregar nuevas carpetas
+      const newFolders = [];
+      for (const newF of preset) {
+        const res = await fetch('/api/folders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newF.name,
+            description: newF.description,
+            icon: newF.icon,
+            color: newF.color
+          })
+        });
+        if (res.ok) {
+          const created = await res.json();
+          newFolders.push(created);
+        }
+      }
+      setFolders(newFolders);
+      
+      const docRes = await fetch('/api/documents');
+      const docsData = await docRes.json();
+      setDocuments(docsData);
+
+      triggerNotification(`Estructura restablecida con éxito al modelo propuesto.`);
+    } catch (err) {
+      console.error(err);
+      triggerNotification('Error al restablecer la plantilla.');
+    }
   };
 
   // Gestión de Documentos
@@ -154,34 +251,54 @@ export default function App() {
     triggerNotification(`Análisis IA finalizado. Esperando confirmación de ubicación.`);
   };
 
-  const handleConfirmDocument = (finalDoc) => {
-    const newDocId = `doc-${Date.now()}`;
-    const newDocument = {
-      id: newDocId,
-      originalName: finalDoc.originalName,
-      size: finalDoc.size,
-      type: finalDoc.type,
-      extension: finalDoc.extension,
-      assignedFolderId: finalDoc.assignedFolderId,
-      confidence: finalDoc.confidence,
-      reasoning: finalDoc.reasoning,
-      summary: finalDoc.summary,
-      tags: finalDoc.tags,
-      analyzedAt: finalDoc.analyzedAt,
-      userOverridden: finalDoc.userOverridden
-    };
+  const handleConfirmDocument = async (finalDoc) => {
+    const formData = new FormData();
+    formData.append('file', finalDoc.fileObject);
+    formData.append('id', `doc-${Date.now()}`);
+    formData.append('confidence', finalDoc.confidence);
+    formData.append('reasoning', finalDoc.reasoning);
+    formData.append('summary', finalDoc.summary);
+    formData.append('tags', JSON.stringify(finalDoc.tags));
+    formData.append('userOverridden', finalDoc.userOverridden);
 
-    setDocuments([newDocument, ...documents]);
-    setCurrentAnalysis(null);
-    
-    const destFolder = folders.find(f => f.id === finalDoc.assignedFolderId);
-    triggerNotification(`Documento archivado en "${destFolder?.name || 'Destino'}" de forma segura.`);
+    try {
+      triggerNotification('Archivando archivo físicamente en la bóveda...');
+      const res = await fetch(`/api/documents/upload/${finalDoc.assignedFolderId}`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (res.ok) {
+        const uploadedDoc = await res.json();
+        setDocuments([uploadedDoc, ...documents]);
+        setCurrentAnalysis(null);
+        
+        const destFolder = folders.find(f => f.id === finalDoc.assignedFolderId);
+        triggerNotification(`"${uploadedDoc.originalName}" guardado en "${destFolder?.name || 'Destino'}" físicamente.`);
+      } else {
+        const errData = await res.json();
+        triggerNotification(`Error al archivar: ${errData.error || 'Desconocido'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      triggerNotification('Error de conexión al subir el archivo.');
+    }
   };
 
-  const handleDeleteDocument = (id) => {
+  const handleDeleteDocument = async (id) => {
     const docName = documents.find(d => d.id === id)?.originalName;
-    setDocuments(documents.filter(d => d.id !== id));
-    triggerNotification(`"${docName}" removido de la bóveda.`);
+    try {
+      const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setDocuments(documents.filter(d => d.id !== id));
+        triggerNotification(`"${docName}" removido físicamente de la bóveda.`);
+      } else {
+        triggerNotification('Error al eliminar el archivo físico.');
+      }
+    } catch (err) {
+      console.error(err);
+      triggerNotification('Error de conexión con el servidor.');
+    }
   };
 
   return (
@@ -263,9 +380,24 @@ export default function App() {
             </p>
           </div>
           
-          <div style={{ color: 'var(--text-dark)', fontSize: '13px', textAlign: 'right' }}>
-            <div>DocuAI Engine v1.4</div>
-            <div style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>En Linea y Cifrado</div>
+          <div style={{ color: 'var(--text-dark)', fontSize: '13px', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+            <div>DocuAI Engine v1.4 Desktop</div>
+            {backendStatus.online ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: 600 }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                Bóveda Finder Conectada
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f59e0b', fontWeight: 600 }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b', boxShadow: '0 0 8px #f59e0b' }} />
+                Servidor Local Offline
+              </div>
+            )}
+            {backendStatus.vaultPath && (
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'monospace' }} title={backendStatus.vaultPath}>
+                {backendStatus.vaultPath.length > 35 ? '...' + backendStatus.vaultPath.slice(-35) : backendStatus.vaultPath}
+              </span>
+            )}
           </div>
         </header>
 

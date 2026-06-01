@@ -1,0 +1,131 @@
+{
+  "folders": [
+    {
+      "id": "soporte_tecnico",
+      "name": "Fotos",
+      "description": "Fotografías, normalmente en formato .jpg",
+      "icon": "✈️",
+      "color": "#6366f1"
+    },
+    {
+      "id": "documentacion",
+      "name": "Documentacion",
+      "description": "Archivos de documentación personal",
+      "icon": "📄",
+      "color": "#10b981"
+    },
+    {
+      "id": "codigo",
+      "name": "Código",
+      "description": "Archivos de programación, tipo .html .css .js .php .py .....",
+      "icon": "🛠️",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "libros_infantiles",
+      "name": "Libros infantiles",
+      "description": "Documentos generalmente en formato .pdf que contienen cuentos infantiles",
+      "icon": "🎨",
+      "color": "#f43f5e"
+    }
+  ],
+  "documents": [
+    {
+      "id": "doc-1780352183094",
+      "originalName": "IMG-20250708-WA0046 (1).jpg",
+      "size": "282.74 KB",
+      "type": "image/jpeg",
+      "extension": "jpg",
+      "assignedFolderId": "soporte_tecnico",
+      "confidence": 52,
+      "reasoning": "La IA ha ubicado tentativamente el archivo en **Fotos** (Confianza sugerida: 52%). No se han encontrado disparadores de coincidencia directa de alto peso, pero de acuerdo con el nombre y la extensión .jpg, es el destino con mayor probabilidad semántica. Puedes reubicarlo manualmente si lo deseas.<br/><br/>💡 **Aprendizaje por Historial:** La IA ha detectado similitud directa con patrones de documentos que ya has guardado en esta carpeta previamente (en particular con *\"<sup>IMG_20180430_121305.jpg</sup>\"*), lo que refuerza la consistencia organizacional de tu bóveda.",
+      "summary": "Archivo de formato .JPG clasificado por metadatos para optimizar la organización del espacio documental.",
+      "tags": [
+        "JPG",
+        "Img",
+        "20250708",
+        "Wa0046"
+      ],
+      "analyzedAt": "00:16",
+      "userOverridden": false
+    },
+    {
+      "id": "doc-1780352078075",
+      "originalName": "IMG_20180430_121305.jpg",
+      "size": "200.71 KB",
+      "type": "image/jpeg",
+      "extension": "jpg",
+      "assignedFolderId": "soporte_tecnico",
+      "confidence": 42,
+      "reasoning": "La IA ha ubicado tentativamente el archivo en **Fotos** (Confianza sugerida: 42%). No se han encontrado disparadores de coincidencia directa de alto peso, pero de acuerdo con el nombre y la extensión .jpg, es el destino con mayor probabilidad semántica. Puedes reubicarlo manualmente si lo deseas.",
+      "summary": "Archivo de formato .JPG clasificado por metadatos para optimizar la organización del espacio documental.",
+      "tags": [
+        "JPG",
+        "Img",
+        "20180430",
+        "121305"
+      ],
+      "analyzedAt": "00:14",
+      "userOverridden": false
+    },
+    {
+      "id": "doc-1780352064792",
+      "originalName": "anverso.jpg",
+      "size": "549.68 KB",
+      "type": "image/jpeg",
+      "extension": "jpg",
+      "assignedFolderId": "documentacion",
+      "confidence": 66,
+      "reasoning": "Se ha asignado a **Documentacion** (Confianza: 66%) puesto que el término clave \"identidad\" identificado en el nombre del archivo sugiere fuertemente esta categoría. Se han extraído patrones comunes que corresponden al almacenamiento típico de esta sección.",
+      "summary": "Documento de identificación personal o acreditación de identidad (como DNI, pasaporte, NIE o similar) digitalizado para control de credenciales.",
+      "tags": [
+        "JPG",
+        "Anverso"
+      ],
+      "analyzedAt": "00:14",
+      "userOverridden": false
+    },
+    {
+      "id": "doc-1780352055944",
+      "originalName": "Capibara_America.pdf",
+      "size": "326.5 MB",
+      "type": "application/pdf",
+      "extension": "pdf",
+      "assignedFolderId": "libros_infantiles",
+      "confidence": 49,
+      "reasoning": "La IA ha ubicado tentativamente el archivo en **Libros infantiles** (Confianza sugerida: 49%). No se han encontrado disparadores de coincidencia directa de alto peso, pero de acuerdo con el nombre y la extensión .pdf, es el destino con mayor probabilidad semántica. Puedes reubicarlo manualmente si lo deseas.",
+      "summary": "Documento escaneado. Primeras líneas identificadas: \"%PDF-1.6 %     1 0 obj  > endobj 16 0 obj  > stream x 34 310 0 CS r.w B.sK#= 431 (9 K  @ % +Q   endstream endo...\"",
+      "tags": [
+        "PDF",
+        "Capibara",
+        "America",
+        "Obj",
+        "Type",
+        "Catalog"
+      ],
+      "analyzedAt": "00:14",
+      "userOverridden": false
+    },
+    {
+      "id": "doc-1780352048259",
+      "originalName": "index.html",
+      "size": "1.07 KB",
+      "type": "text/html",
+      "extension": "html",
+      "assignedFolderId": "codigo",
+      "confidence": 70,
+      "reasoning": "Se ha asignado a **Código** (Confianza: 70%) puesto que el término clave \"codigo\" identificado en el nombre del archivo, sumado a palabras de alta coincidencia semántica analizadas en el interior del documento (como términos afines en plural/singular detectados en las descripciones de carpetas) sugiere fuertemente esta categoría. Se han extraído patrones comunes que corresponden al almacenamiento típico de esta sección.",
+      "summary": "Documento escaneado. Primeras líneas identificadas: \"Piedra Papel Tijera       Juego de Piedra Papel Tijera    Introduce el nombre del jugador       ¿Cuántas parti...\"",
+      "tags": [
+        "HTML",
+        "Index",
+        "Doctype",
+        "Head",
+        "Meta",
+        "Charset"
+      ],
+      "analyzedAt": "00:14",
+      "userOverridden": false
+    }
+  ]
+}

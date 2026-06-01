@@ -22,26 +22,26 @@ export default function DocumentVault({ folders, documents, onDeleteDocument, on
     }));
   };
 
-  // Acción mock de descarga
+  // Acción de descarga real desde el backend
   const handleDownload = (doc, e) => {
     e.stopPropagation();
-    // Creamos un blob mock para descargar
-    const blob = new Blob([doc.summary || ''], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
+    const fileUrl = `/api/files/${doc.assignedFolderId}/${doc.originalName}`;
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `DocuAI_${doc.originalName}`;
+    a.href = fileUrl;
+    a.download = doc.originalName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
     
-    onShowNotification(`Descargando copia local de: ${doc.originalName}`);
+    onShowNotification(`Descargando copia física de: ${doc.originalName}`);
   };
 
+  // Apertura de archivo física en pestaña nativa del navegador
   const handleView = (doc, e) => {
     e.stopPropagation();
-    alert(`[DocuAI Visualizador Integrado]\n\nNombre: ${doc.originalName}\nTamaño: ${doc.size}\nResumen IA: ${doc.summary}\n\nEste archivo está resguardado en la bóveda cifrada en la sección de ${folders.find(f => f.id === doc.assignedFolderId)?.name}.`);
+    const fileUrl = `/api/files/${doc.assignedFolderId}/${doc.originalName}`;
+    window.open(fileUrl, '_blank');
+    onShowNotification(`Visualizando archivo: ${doc.originalName}`);
   };
 
   // Filtrado de documentos
@@ -123,11 +123,49 @@ export default function DocumentVault({ folders, documents, onDeleteDocument, on
                     </div>
                   </div>
 
-                  <div className="vault-folder-meta">
+                  <div className="vault-folder-meta" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ 
+                        padding: '4px 10px', 
+                        fontSize: '11px', 
+                        borderRadius: '4px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        background: 'rgba(255,255,255,0.03)',
+                        color: 'white',
+                        marginRight: '8px'
+                      }}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const res = await fetch('/api/system/open-folder', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ folderId: folder.id })
+                          });
+                          if (res.ok) {
+                            onShowNotification(`Abriendo carpeta "${folder.name}" en Finder`);
+                          } else {
+                            onShowNotification(`No se pudo abrir en Finder`);
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          onShowNotification(`Error al abrir Finder`);
+                        }
+                      }}
+                      title="Abrir directorio real en Finder de macOS"
+                    >
+                      <span>📂 Finder</span>
+                    </button>
+
                     <span className="folder-badge" style={{ backgroundColor: `${folder.color}25`, color: '#fff' }}>
                       {folderDocs.length} {folderDocs.length === 1 ? 'archivo' : 'archivos'}
                     </span>
-                    <svg className="chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" onClick={() => toggleFolder(folder.id)}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>

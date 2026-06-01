@@ -75,7 +75,7 @@ export default function DropZone({ folders, documents = [], onAnalysisComplete }
 
       setTimeout(() => {
         setIsScanning(false);
-        onAnalysisComplete(result);
+        onAnalysisComplete({ ...result, fileObject: file });
       }, 300);
     } catch (error) {
       console.error(error);
